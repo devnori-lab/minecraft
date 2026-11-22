@@ -1,0 +1,9 @@
+.cache/
+build/
+.claude/
+.vscode/
+*.o
+*.obj
+*.a
+*.so
+*.out
