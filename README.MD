@@ -19,12 +19,12 @@ your vertex data  →  VERTEX SHADER  →  rasterizer  →  FRAGMENT SHADER  →
 ```
 
 
+helper func: links shaders to program
+program: helps us draw on window
+
 VBO-vertex buffer object
 VAO-vertex array object
-NDC-normalized device coordinates
-
-
-
+NDC-normalized device coordinates (-1,1) from center of screen
 
 
 
