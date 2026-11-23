@@ -34,7 +34,5 @@ NDC-normalized device coordinates (-1,1) from center of screen
 
 # Build and run
 ```
-cmake -S . -B build -G Ninja
-cmake --build build
-./build/mc
+cmake -S . -B build -G Ninja && cmake --build build && ./build/mc
 ```

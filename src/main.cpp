@@ -1,7 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 // #include <cstddef>
-#include <cstddef>
 #include <iostream>
 #include <cmath>
 using namespace std;
@@ -74,7 +73,12 @@ GLuint createProgram(const char* Vsrc, const char* Fsrc){
     glDeleteShader(fs);
     return program;
 }
-
+ 
+// resize
+void resize(GLFWwindow* window, int width, int height){
+    (void)window; // something neccessary
+    glViewport(0, 0, width, height);
+}
 
 
 int main (){
@@ -96,7 +100,7 @@ int main (){
         return 1;
     }
     glfwMakeContextCurrent(window);
-
+    glfwSetFramebufferSizeCallback(window, resize);
     // time to use glew: loading opengl functions
     GLenum error = glewInit();
     if(error!= GLEW_OK && error!= GLEW_ERROR_NO_GLX_DISPLAY){
@@ -118,6 +122,10 @@ int main (){
         .0f, 1.0f,   .0f,    0.5f,  0.5f, 0.5f, 
         .5f, -.5f, .0f, 0.5f, 0.5f, 0.5f
     };
+
+    
+
+
 
     GLuint VAO, VBO;
     glGenVertexArrays(1,&VAO);
@@ -144,7 +152,7 @@ int main (){
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)==GLFW_PRESS){
             glfwSetWindowShouldClose(window, true);
         }
-        glClearColor(sin(glfwGetTime()), 0.8f, 0.8f, 1.0f);
+        glClearColor(0.5f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
 
