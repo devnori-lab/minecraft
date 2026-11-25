@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 // #include <cstddef>
 #include <iostream>
-#include <cmath>
+// #include <cmath>
 using namespace std;
 
 
@@ -14,11 +14,17 @@ const char* vSrc = R"(
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aColor;
 
+
+
+uniform float uTime;
+
 out vec3 vColor;
 
 void main(){
     vColor = aColor;
-    gl_Position = vec4(aPos, 1.0);
+    vec3 pos = aPos;
+    pos.x += 0.5 * sin(uTime);
+    gl_Position = vec4(pos, 1.0);
 }
 )";
 
@@ -116,23 +122,37 @@ int main (){
     // making program
     GLuint shaderProg = createProgram(vSrc ,fSrc);
 
+    GLint uLocation = glGetUniformLocation(shaderProg, "uTime");
+    if(uLocation==-1){
+        cout<<"warning 'uniform -uTime- not found\n";
+    }
+
     float v[]={
         //     pos                           color
-        -1.0f, -1.0f, .0f,  0.5f,   0.5f, 0.5f, 
-        .0f, 1.0f,   .0f,    0.5f,  0.5f, 0.5f, 
-        .5f, -.5f, .0f, 0.5f, 0.5f, 0.5f
+       -.5f, .5f, .0f,      0.0f, 0.5f, 0.0f,
+        .5f, .5f, .0f,      0.0f, 0.5f, 0.0f,
+        .5f,-.5f, .0f,  0.0f, 0.5f, 0.0f,
+       -.5f,-.5f, .0f,  0.0f, 0.5f, 0.0f
+
     };
 
+    unsigned int indeces[]={
+        0,3, 2,
+        1,0,2
+    };
     
 
 
 
-    GLuint VAO, VBO;
+    GLuint VAO, VBO, EBO;
     glGenVertexArrays(1,&VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
     glBindVertexArray(VAO); // start
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(v), v, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 6*sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
@@ -157,8 +177,13 @@ int main (){
 
 
         glUseProgram(shaderProg);
+
+
+        glUniform1f(uLocation, (float)glfwGetTime());
+
+
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3); 
+        glDrawElements(GL_TRIANGLES , 6, GL_UNSIGNED_INT, nullptr); 
 
 
         glfwSwapBuffers(window);
@@ -166,6 +191,8 @@ int main (){
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+
     glDeleteProgram(shaderProg);
     glfwDestroyWindow(window);
     glfwTerminate();
