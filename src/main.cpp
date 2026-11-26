@@ -1,88 +1,22 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 // #include <cstddef>
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/trigonometric.hpp>
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "Shader.h"
 // #include <cmath>
 using namespace std;
 
 
-
-// vertex shader 
-// R--- raw string in cpp
-const char* vSrc = R"(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-
-
-
-uniform float uTime;
-
-out vec3 vColor;
-
-void main(){
-    vColor = aColor;
-    vec3 pos = aPos;
-    pos.x += 0.5 * sin(uTime);
-    gl_Position = vec4(pos, 1.0);
-}
-)";
-
-const char* fSrc = R"(
-#version 330 core
-in vec3 vColor;
-out vec4 FragColor;
-
-void main(){
-    FragColor = vec4(vColor, 1.0);
-}
-)";
-
-//  compiler function
-GLuint compileShader(GLenum type, const char* source){
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &source, nullptr);
-    glCompileShader(shader);
-    // checkin for errors
-    int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if(!success){
-        char log[512];
-        glGetShaderInfoLog(shader, 512, nullptr, log);
-        cout << "shader compilation error:: " << (type == GL_VERTEX_SHADER? "vertex" : "frag") << "::\n"<<log<<endl;
-    }
-    return shader;
-}
-
-
-
-
-
-// helper: it links both shaders to a program, that is than used to draw
-
-GLuint createProgram(const char* Vsrc, const char* Fsrc){
-    GLuint vs = compileShader(GL_VERTEX_SHADER, Vsrc);
-    GLuint fs = compileShader(GL_FRAGMENT_SHADER, Fsrc);
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-
-    int success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success){
-        char log[512];
-        glGetProgramInfoLog(program, 512, nullptr, log);
-        cout << "program link error:: \n"<<log<< endl;
-    }
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-    return program;
-}
  
 // resize
-void resize(GLFWwindow* window, int width, int height){
-    (void)window; // something neccessary
+void resize(GLFWwindow*, int width, int height){
+    //(void)window; // not needed
     glViewport(0, 0, width, height);
 }
 
@@ -117,83 +51,131 @@ int main (){
     cout << "OpenGl: "<< glGetString(GL_VERSION)<<endl;
 
 
+    {
+        Shader shader(ASSET_DIR "shaders/basic.vert", ASSET_DIR "shaders/basic.frag");
+        
+        
+        
+        // cube data template
+        float v[] = {   
+            //   x        y           z           r           g       b
+            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,   // 0 front bottom-left
+             0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,   // 1 front bottom-right
+             0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,   // 2 front top-right
+            -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,   // 3 front top-left
+            -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,   // 4 back bottom-left
+             0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,   // 5 back bottom-right
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,   // 6 back top-right
+            -0.5f,  0.5f, -0.5f,  0.2f, 0.2f, 0.2f,   // 7 back top-left
+        };
 
-
-    // making program
-    GLuint shaderProg = createProgram(vSrc ,fSrc);
-
-    GLint uLocation = glGetUniformLocation(shaderProg, "uTime");
-    if(uLocation==-1){
-        cout<<"warning 'uniform -uTime- not found\n";
-    }
-
-    float v[]={
-        //     pos                           color
-       -.5f, .5f, .0f,      0.0f, 0.5f, 0.0f,
-        .5f, .5f, .0f,      0.0f, 0.5f, 0.0f,
-        .5f,-.5f, .0f,  0.0f, 0.5f, 0.0f,
-       -.5f,-.5f, .0f,  0.0f, 0.5f, 0.0f
-
-    };
-
-    unsigned int indeces[]={
-        0,3, 2,
-        1,0,2
-    };
-    
-
-
-
-    GLuint VAO, VBO, EBO;
-    glGenVertexArrays(1,&VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-    glBindVertexArray(VAO); // start
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(v), v, GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 6*sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0); //end
+        // 6 faces x 2 triangles x 3 indices = 36
+        // each triangle is counter-clockwise when seen from OUTSIDE the cube
+        unsigned int indeces[] = {
+            0, 1, 2,  2, 3, 0,   // front  (+z)
+            5, 4, 7,  7, 6, 5,   // back   (-z)
+            4, 0, 3,  3, 7, 4,   // left   (-x)
+            1, 5, 6,  6, 2, 1,   // right  (+x)
+            3, 2, 6,  6, 7, 3,   // top    (+y)
+            4, 5, 1,  1, 0, 4,   // bottom (-y)
+        };
 
 
 
 
-    // game loop
 
-    while (!glfwWindowShouldClose(window)){
-        glfwPollEvents(); // handles input and window events
 
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE)==GLFW_PRESS){
-            glfwSetWindowShouldClose(window, true);
+
+
+
+
+
+
+
+
+
+
+
+        // // making program
+        // GLuint shaderProg = createProgram(vSrc ,fSrc);
+
+        // GLint uLocation = glGetUniformLocation(shaderProg, "uTime");
+        // if(uLocation==-1){
+        //     cout<<"warning 'uniform -uTime- not found\n";
+        // }
+
+        
+
+
+
+        GLuint VAO, VBO, EBO;
+        glGenVertexArrays(1,&VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+        glBindVertexArray(VAO); // start
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(v), v, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 6*sizeof(float), nullptr);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        glBindVertexArray(0); //end
+
+
+        glEnable(GL_DEPTH_TEST); // going 3d!!
+        glEnable(GL_CULL_FACE); // back of triangle becomes invisible
+
+
+
+        // game loop
+
+        while (!glfwWindowShouldClose(window)){
+            glfwPollEvents(); // handles input and window events
+
+            if (glfwGetKey(window, GLFW_KEY_ESCAPE)==GLFW_PRESS){
+                glfwSetWindowShouldClose(window, true);
+            }
+            glClearColor(0.5f, 0.8f, 0.8f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pipe means both buffer get delete simultaneously
+
+            // glUseProgram(shaderProg);
+            shader.use(); // program is used here // every update comes after this
+
+            // glUniform1f(uLocation, (float)glfwGetTime());
+            // shader.setFloat("uTime", (float)glfwGetTime());
+
+            int fbw, fbh; // frame buffer width/height
+            glfwGetFramebufferSize(window, &fbw, &fbh);
+            // float aspect = fbw/fbh;
+            float aspect = (fbh>0) ? (float)fbw/(float)fbh : 1.0f;
+
+            glm::mat4 model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); // vec3 is the axis of rotation
+
+            glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f)); // camera at a distance
+
+            glm::mat4 projection = glm::perspective(glm::radians(70.0f), aspect, 0.1f, 100.0f);
+
+            shader.setMat4("uModel", model);
+            shader.setMat4("uView", view);
+            shader.setMat4("uProjection", projection);
+
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES , 36, GL_UNSIGNED_INT, nullptr); 
+
+
+            glfwSwapBuffers(window);
         }
-        glClearColor(0.5f, 0.8f, 0.8f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
-
-        glUseProgram(shaderProg);
-
-
-        glUniform1f(uLocation, (float)glfwGetTime());
-
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES , 6, GL_UNSIGNED_INT, nullptr); 
-
-
-        glfwSwapBuffers(window);
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
     }
-
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-
-    glDeleteProgram(shaderProg);
+    
+    // glDeleteProgram(shaderProg);
     glfwDestroyWindow(window);
     glfwTerminate();
     
