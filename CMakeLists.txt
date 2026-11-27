@@ -12,7 +12,7 @@ find_package(glfw3 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glm REQUIRED)
 
-add_executable(mc src/main.cpp src/Shader.cpp src/Camera.cpp)
+add_executable(mc src/main.cpp src/Shader.cpp src/Camera.cpp src/stb_image.cpp src/Texture.cpp)
 target_compile_definitions(mc PRIVATE ASSET_DIR="${CMAKE_SOURCE_DIR}/src/")
 target_link_libraries(mc PRIVATE glfw GLEW::GLEW glm::glm OpenGL::GL)
 target_compile_options(mc PRIVATE -Wall -Wextra)

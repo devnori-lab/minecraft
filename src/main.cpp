@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Camera.h"
 #include "Shader.h"
+#include "Texture.h"
 // #include <cmath>
 using namespace std;
 
@@ -61,32 +62,60 @@ int main (){
 
     {
         Shader shader(ASSET_DIR "shaders/basic.vert", ASSET_DIR "shaders/basic.frag");
-        
+        Texture texture(ASSET_DIR "textures/tile_01.png");
+        shader.use();
+        shader.setInt("uTexture",0);
         
         
         // cube data template
-        float v[] = {   
-            //   x        y           z           r           g       b
-            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,   // 0 front bottom-left
-             0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,   // 1 front bottom-right
-             0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,   // 2 front top-right
-            -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,   // 3 front top-left
-            -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,   // 4 back bottom-left
-             0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,   // 5 back bottom-right
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,   // 6 back top-right
-            -0.5f,  0.5f, -0.5f,  0.2f, 0.2f, 0.2f,   // 7 back top-left
+                float v[] = {
+            //   x      y      z      u     v
+            // front (+z)
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            // back (-z)
+             0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            // left (-x)
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            // right (+x)
+             0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            // top (+y)
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            // bottom (-y)
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
         };
 
-        // 6 faces x 2 triangles x 3 indices = 36
-        // each triangle is counter-clockwise when seen from OUTSIDE the cube
-        unsigned int indeces[] = {
-            0, 1, 2,  2, 3, 0,   // front  (+z)
-            5, 4, 7,  7, 6, 5,   // back   (-z)
-            4, 0, 3,  3, 7, 4,   // left   (-x)
-            1, 5, 6,  6, 2, 1,   // right  (+x)
-            3, 2, 6,  6, 7, 3,   // top    (+y)
-            4, 5, 1,  1, 0, 4,   // bottom (-y)
-        };
+        // every face uses the same pattern: (0,1,2) and (2,3,0), offset by 4 per face
+        unsigned int indeces[36];
+        for (int face = 0; face < 6; face++) {
+            unsigned int b = face * 4;   // first vertex face
+            int i = face * 6;            // first index slot face
+            indeces[i + 0] = b + 0;
+            indeces[i + 1] = b + 1;
+            indeces[i + 2] = b + 2;
+            indeces[i + 3] = b + 2;
+            indeces[i + 4] = b + 3;
+            indeces[i + 5] = b + 0;
+        }
+
+        
 
 
 
@@ -126,9 +155,9 @@ int main (){
         glBufferData(GL_ARRAY_BUFFER, sizeof(v), v, GL_STATIC_DRAW);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), indeces, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 6*sizeof(float), nullptr);
+        glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 5*sizeof(float), nullptr);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
         glEnableVertexAttribArray(1);
 
         glBindVertexArray(0); //end
@@ -179,6 +208,7 @@ int main (){
             // glUseProgram(shaderProg);
             shader.use(); // program is used here // every update comes after this
 
+            texture.bind(0);
             // glUniform1f(uLocation, (float)glfwGetTime());
             // shader.setFloat("uTime", (float)glfwGetTime());
 
@@ -208,7 +238,7 @@ int main (){
                     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
                 }
             }
-            glDrawElements(GL_TRIANGLES , 36, GL_UNSIGNED_INT, nullptr); 
+            // glDrawElements(GL_TRIANGLES , 36, GL_UNSIGNED_INT, nullptr); 
 
 
             glfwSwapBuffers(window);

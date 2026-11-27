@@ -10,7 +10,7 @@ class Camera{
         float pitch = 0.0f;
         float speed = 5.0f;
         float sensitivity = 0.1f;
-        float fov = 70.0f;
+        float fov = 80.0f;
 
         explicit Camera(glm::vec3 startPos);
 

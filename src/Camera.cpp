@@ -34,7 +34,7 @@ void Camera::MouseControl(float dx, float dy){
 void Camera::move(float forward, float right,float up, float dt){
     float y = glm::radians(yaw);
     glm::vec3 flatfront(cos(y), 0.0f, sin(y));
-    glm::vec3 flatright(cos(y), 0.0f, sin(y));
+    glm::vec3 flatright(-sin(y), 0.0f, cos(y));
     glm::vec3 worldup(0.0f, 1.0f, 0.0f);
     glm::vec3 dir = flatfront*forward + flatright*right + worldup*up;
     if (glm::length(dir)>0.0f){
