@@ -34,6 +34,12 @@ Matrix	::::
 -Projection	How does 3D get flattened to 2D?	Field of view, aspect ratio, how far you can see
 
 
+
+glm::lookAt(eye,target,up) // this builds a view matrix
+
+delta time: dt: to make fps constant
+
+
 # Build and run
 ```
 cmake -S . -B build -G Ninja && cmake --build build && ./build/mc
